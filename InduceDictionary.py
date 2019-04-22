@@ -90,5 +90,6 @@ if tgt2src:
             top_alignments = {v[0]:(k,v[1]) for k,v in top_alignments.items()}
 
 
-for k in sorted(top_alignments, key=lambda x: top_alignments[x][1])[:topN]:
-            print(k+'\t'+top_alignments[k][0], file=args.outfile)
+with open(args.outfile,'w') as outfile:
+	for k in sorted(top_alignments, key=lambda x: top_alignments[x][1])[:topN]:
+        	print(k+'\t'+top_alignments[k][0], file=outfile)
