@@ -237,6 +237,9 @@ def convert_to_P(matrix, P_dist = 'conditional', in_place=True):
     word_count = matrix.values.sum()
     P_word = (matrix.sum(axis=1) / word_count)[:,None]
     matrix = matrix / matrix.sum(axis=1)[:,None]
+    if P_dist == 'normal':
+        norm = np.linalg.norm(matrix)
+        return matrix / norm
     if P_dist == 'conditional':
         return matrix
     elif P_dist == 'joint':
