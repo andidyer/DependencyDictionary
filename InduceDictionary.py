@@ -15,6 +15,7 @@ argparser = argparse.ArgumentParser('For making a dictionary between languages')
 argparser.add_argument('srcfile', help='the source language\'s matrix')
 argparser.add_argument('tgtfile', help='the target language\'s matrix')
 argparser.add_argument('outfile', help='the file that the dictionary should be printed into')
+argparser.add_argument('-diverge', help='the measure of divergence. options: jsd, kl, cos', default='jsd')
 argparser.add_argument('-batchsize', action='store', type=int, help='batch size in which the CSVs will be read.  higher is faster, but requires more memory', default=64)
 argparser.add_argument('-topN', action='store', type=int, help='top N items from the dictionary to keep', default=100)
 argparser.add_argument('--tgt2src', action='store_true', help='map from target language words to source language words. recommended if the target language is much smaller than the source language, but will produce a much smaller dictionary', default=100)
@@ -55,7 +56,7 @@ topN = args.topN
 tgt2src = args.tgt2src
 verbose = args.verbose
 
-if tgt2src:
+if tgt2src: #swap src and tgt, so that tgt is mapped to src
             temp = src
             src = tgt
             tgt = temp
@@ -73,14 +74,19 @@ for src_batch in src_reader:
                         tgt_reader = pd.read_csv(tgt, index_col=0, usecols=None, chunksize=BATCHSIZE)
                         for tgt_batch in tgt_reader:
                                     wrds_tgt, vecs_tgt = tgt_batch.index, tgt_batch.to_numpy()
-                                    diverge = JSD(vec_src, vecs_tgt, axis=1)
+                                    if args.diverge == 'jsd':
+                                                diverge = JSD(vec_src, vecs_tgt, axis=1)
+                                    elif args.diverge == 'kl':
+                                                diverge = ent(vec_src, vecs_tgt, axis=1)
+                                    elif args.diverge == 'cos':
+                                                diverge = np.dot(vec_src, vecs_tgt.T)
                                     top_ind = np.argmin(diverge)
                                     lowest = np.min(diverge)
                                     if lowest < top_alignments[w_src][1]:
                                                 top_alignments[w_src] = (wrds_tgt[top_ind], lowest)
             if verbose:
                         counter += 1
-                        print('{} batches processed'.format(counter), end='\r',file=stderr)
+                        print('{} batches processed'.format(counter),file=stderr)
 src_reader.close()
 tgt_reader.close()
 print('done', time.ctime(),file=stderr)
