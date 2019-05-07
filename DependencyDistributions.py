@@ -108,7 +108,7 @@ def getContexts(conll, num_norm = True):
                     assert re.match('\d+[-.]\d+', index), ('Unknown error not caused by range argument)')
                     pass #This is probably a range item
 
-            if len(line)==0:
+            if len(line)==0 or line[0]=='#':
                 outdict = dict()
                 for index,form,UPOS,head,deprel in tabs[1:]:
                     try:
