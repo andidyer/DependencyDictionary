@@ -78,8 +78,8 @@ def compute_distances(src_words, src_vecs, tgt_words, tgt_vecs):
 #step 3: Find bilingual neighbours
 #step 3.1 (optional: symmetry constraint)
 #step 3.2 (optional: closeness threshold)
-bidict = [] #The bilingual dictionary
 def find_neighbours(src_words, src_vecs, tgt_words, tgt_vecs, src_neighbours, tgt_neighbours, SYM=True, THR=0.5):
+    bidict = [] #The bilingual dictionary
     q_src = src_words.copy()
     q_tgt = tgt_words.copy()
     if SYM: #If symmetry constraint is True, we can save a lot of time because we only have to look at one word list
