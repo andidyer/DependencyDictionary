@@ -58,11 +58,8 @@ def normalise(embs):
     embs /= norms[:,None] #broadcast to fit
     return embs
 
-src_vecs = normalise(src_vecs)
-tgt_vecs = normalise(tgt_vecs)
-
 #step 1 & 2: Compute distances for each word in source language and target language
-def compute_distances(src words, src_vecs, tgt_words, tgt_vecs):
+def compute_distances(src_words, src_vecs, tgt_words, tgt_vecs):
     src_neighbours = {}
     tgt_neighbours = {}
     for word,vec in zip(src_words, src_vecs):
@@ -112,9 +109,9 @@ if __name__=='__main__':
     tgt_words, tgt_vecs = read_embeddings(args.tgt_embs)
     src_embs = normalise(src_vecs) #Normalise embbs
     tgt_embs = normalise(tgt_vecs)
-    src_neighbours, tgt_neighbours = compute_distances(src words, src_vecs, tgt_words, tgt_vecs) #compute distances and get neighbour dictionaries
+    src_neighbours, tgt_neighbours = compute_distances(src_words, src_vecs, tgt_words, tgt_vecs) #compute distances and get neighbour dictionaries
     bidict = find_neighbours(src_words, src_vecs, tgt_words, tgt_vecs, src_neighbours, tgt_neighbours,
                              SYM=args.symmetry, THR=args.threshold) #make the dictionary
-    outfile = args.open('outfile','w') #print the dictionary
+    outfile = open(args.outfile,'w') #print the dictionary
     for s,t in bidict:
         print(s,t, file=outfile)
