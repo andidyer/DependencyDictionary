@@ -3,6 +3,8 @@ from numpy.linalg import norm
 import copy
 from itertools import islice
 import argparse
+from sys import stdout,stderr
+from time import ctime, time
 
 argparser = argparse.ArgumentParser('For making a dictionary between languages')
 argparser.add_argument('src_embs', help='the source language embeddings')
@@ -11,6 +13,7 @@ argparser.add_argument('outfile', help='the file that the dictionary should be p
 argparser.add_argument('-topN', action='store', type=int, help='top N items from the dictionary to keep', default=1000)
 argparser.add_argument('-threshold', '-thr', action='store', type=float, help='proximity threshold to keep entries', default=0.5)
 argparser.add_argument('--symmetry', '-sym', action='store_true', help='symmetry constraint')
+argparser.add_argument('--verbose', '-v', action='store_true', help='verbosity')
 args = argparser.parse_args()
 
 
@@ -59,18 +62,31 @@ def normalise(embs):
     return embs
 
 #step 1 & 2: Compute distances for each word in source language and target language
-def compute_distances(src_words, src_vecs, tgt_words, tgt_vecs):
+def compute_distances(src_words, src_vecs, tgt_words, tgt_vecs, verbose=0):
     src_neighbours = {}
     tgt_neighbours = {}
+    sl, sm = int(len(src_words)), int(len(src_words)/20)
+    tl, tm = int(len(src_words)), int(len(tgt_words)/20)
+    i=0
     for word,vec in zip(src_words, src_vecs):
         distances = vec @ tgt_vecs.T #dot product word and all tgt words. T=transpose
         closest = np.argmax(distances) #gets an index of the closest tgt vec
         src_neighbours[word] = tgt_words[closest], distances[closest]
-
+        if verbose and sm>0:
+            if i % sm == 0:
+                print('distances found for {} out of {} source language words'.format(i,sl))
+        i+=1
+            
+    i=0
     for word,vec in zip(tgt_words, tgt_vecs):
         distances = vec @ src_vecs.T #dot product word and all tgt words. T=transpose
         closest = np.argmax(distances) #gets an index of the closest tgt vec
         tgt_neighbours[word] = src_words[closest], distances[closest]
+        if verbose and tm>0:
+            if i % tm == 0:
+                print('distances found for {} out of {} source language words'.format(i,tl))
+        i+=1
+
 
     return src_neighbours, tgt_neighbours
 
@@ -105,11 +121,13 @@ def find_neighbours(src_words, src_vecs, tgt_words, tgt_vecs, src_neighbours, tg
         
 #our bilingual dictionary
 if __name__=='__main__':
+    if args.verbose:
+        print('Began process {}'.format(ctime()), file=stderr)
     src_words, src_vecs = read_embeddings(args.src_embs) #Read embs
     tgt_words, tgt_vecs = read_embeddings(args.tgt_embs)
     src_embs = normalise(src_vecs) #Normalise embbs
     tgt_embs = normalise(tgt_vecs)
-    src_neighbours, tgt_neighbours = compute_distances(src_words, src_vecs, tgt_words, tgt_vecs) #compute distances and get neighbour dictionaries
+    src_neighbours, tgt_neighbours = compute_distances(src_words, src_vecs, tgt_words, tgt_vecs, args.verbose) #compute distances and get neighbour dictionaries
     bidict = find_neighbours(src_words, src_vecs, tgt_words, tgt_vecs, src_neighbours, tgt_neighbours,
                              SYM=args.symmetry, THR=args.threshold) #make the dictionary
     outfile = open(args.outfile,'w') #print the dictionary
