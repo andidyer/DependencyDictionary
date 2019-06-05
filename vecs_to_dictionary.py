@@ -10,9 +10,11 @@ argparser = argparse.ArgumentParser('For making a dictionary between languages')
 argparser.add_argument('src_embs', help='the source language embeddings')
 argparser.add_argument('tgt_embs', help='the target language embeddings')
 argparser.add_argument('outfile', help='the file that the dictionary should be printed into')
+argparser.add_argument('-norm_sequence', help='sequence of normalisation functions to perform on the embeddings.', nargs='*',
+                       type=str, default=('matrix_normalise','length_normalise','mean_center','length_normalise'))
 argparser.add_argument('-topN', action='store', type=int, help='top N items from the dictionary to keep', default=1000)
 argparser.add_argument('-threshold', '-thr', action='store', type=float, help='proximity threshold to keep entries', default=0.5)
-argparser.add_argument('--symmetry', '-sym', action='store_true', help='symmetry constraint')
+argparser.add_argument('--symmetry', '-sym', action='store', type=int, default=1, help='symmetry constraint; default True')
 argparser.add_argument('--verbose', '-v', action='store_true', help='verbosity')
 args = argparser.parse_args()
 
@@ -55,11 +57,56 @@ tgt_vecs = np.array([[0.15,-1.1,0.99],
                      [0.15,-0.15,-0.98],
                      [0.7,0.35,0.6]])"""
 
-#step 0: Normalise the vectors to be unit length
-def normalise(embs):
-    norms = norm(embs, axis=1) #gets the frobenius norm of each vector
-    embs /= norms[:,None] #broadcast to fit
-    return embs
+def matrix_normalise(matrix):
+    """performs matrix normalisation on the embedding space"""
+    return matrix / np.linalg.norm(matrix)
+
+def length_normalise(matrix):
+    """vector length normalisation"""
+    norms = np.linalg.norm(matrix, axis=1)[:,None]
+    norms[norms==0] = 1
+    return matrix / norms
+
+def mean_center(matrix):
+    """mean centering of embedding space"""
+    mu = np.mean(matrix, axis=0)
+    return matrix-mu
+
+def dim_length_normalise(matrix):
+    """dimension length normalisation across vector space"""
+    norms = np.linalg.norm(matrix, axis=0)
+    norms[norms==0] = 1
+    return matrix / norms
+
+def dim_mean_center(matrix):
+    """mean centering of embedding space"""
+    mu = np.mean(matrix, axis=1)[:,None]
+    return matrix-mu
+
+def norm_sequence(matrix, pipeline):
+    """pipeline for normalising word embeddings
+    
+    Args:
+    matrix: a dependency matrix
+    *pipeline: a sequence of one or more normalisation functions as defined above
+    example:
+    >>>norm_sequence(matrix, (length_normalise, mean_center, length_normalise))
+    [performs length norm, mean center, length norm on matrix and returns]"""
+
+    funcs = {'matrix_normalise': matrix_normalise,
+             'length_normalise': length_normalise,
+             'mean_center': mean_center,
+             'dim_length_normalise': dim_length_normalise,
+             'dim_mean_center': dim_mean_center}
+    
+    for op in pipeline:
+        fn = funcs[op]
+        matrix = fn(matrix)
+    return matrix
+
+
+
+
 
 #step 1 & 2: Compute distances for each word in source language and target language
 def compute_distances(src_words, src_vecs, tgt_words, tgt_vecs, verbose=0):
@@ -125,11 +172,11 @@ if __name__=='__main__':
         print('Began process {}'.format(ctime()), file=stderr)
     src_words, src_vecs = read_embeddings(args.src_embs) #Read embs
     tgt_words, tgt_vecs = read_embeddings(args.tgt_embs)
-    src_embs = normalise(src_vecs) #Normalise embbs
-    tgt_embs = normalise(tgt_vecs)
+    src_embs = norm_sequence(src_vecs, args.norm_sequence) #Normalise embbs
+    tgt_embs = norm_sequence(tgt_vecs, args.norm_sequence)
     src_neighbours, tgt_neighbours = compute_distances(src_words, src_vecs, tgt_words, tgt_vecs, args.verbose) #compute distances and get neighbour dictionaries
     bidict = find_neighbours(src_words, src_vecs, tgt_words, tgt_vecs, src_neighbours, tgt_neighbours,
                              SYM=args.symmetry, THR=args.threshold) #make the dictionary
     outfile = open(args.outfile,'w') #print the dictionary
     for s,t in bidict:
-        print(s,t, file=outfile)
+        print(s,'\t',t, file=outfile)
