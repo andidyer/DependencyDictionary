@@ -15,7 +15,7 @@ argparser.add_argument('-norm_sequence', help='sequence of normalisation functio
 argparser.add_argument('-topN', action='store', type=int, help='top N items from the dictionary to keep', default=1000)
 argparser.add_argument('-threshold', '-thr', action='store', type=float, help='proximity threshold to keep entries', default=0.5)
 argparser.add_argument('--symmetry', '-sym', action='store', type=int, default=1, help='symmetry constraint; default True')
-argparser.add_argument('--verbose', '-v', action='store_true', help='verbosity')
+argparser.add_argument('--verbose', '-v', action='store', type=int, default=0, help='verbosity (default False')
 args = argparser.parse_args()
 
 
