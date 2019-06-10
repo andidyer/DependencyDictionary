@@ -11,7 +11,7 @@ argparser.add_argument('src_embs', help='the source language embeddings')
 argparser.add_argument('tgt_embs', help='the target language embeddings')
 argparser.add_argument('outfile', help='the file that the dictionary should be printed into')
 argparser.add_argument('-norm_sequence', help='sequence of normalisation functions to perform on the embeddings.', nargs='*',
-                       type=str, default=('matrix_normalise','length_normalise','mean_center','length_normalise'))
+                       type=str, default=('length_normalise','mean_center','length_normalise'))
 argparser.add_argument('-topN', action='store', type=int, help='top N items from the dictionary to keep', default=1000)
 argparser.add_argument('-threshold', '-thr', action='store', type=float, help='proximity threshold to keep entries', default=0.5)
 argparser.add_argument('--symmetry', '-sym', action='store', type=int, default=1, help='symmetry constraint; default True')
