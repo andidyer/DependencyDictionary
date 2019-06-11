@@ -131,7 +131,7 @@ def compute_distances(src_words, src_vecs, tgt_words, tgt_vecs, verbose=0):
         tgt_neighbours[word] = src_words[closest], distances[closest]
         if verbose and tm>0:
             if i % tm == 0:
-                print('distances found for {} out of {} source language words'.format(i,tl))
+                print('distances found for {} out of {} target language words'.format(i,tl))
         i+=1
 
 
