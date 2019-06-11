@@ -113,7 +113,7 @@ def compute_distances(src_words, src_vecs, tgt_words, tgt_vecs, verbose=0):
     src_neighbours = {}
     tgt_neighbours = {}
     sl, sm = int(len(src_words)), int(len(src_words)/20)
-    tl, tm = int(len(src_words)), int(len(tgt_words)/20)
+    tl, tm = int(len(tgt_words)), int(len(tgt_words)/20)
     i=0
     for word,vec in zip(src_words, src_vecs):
         distances = vec @ tgt_vecs.T #dot product word and all tgt words. T=transpose
